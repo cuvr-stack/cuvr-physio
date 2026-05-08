@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+.env
+.env.local
+.env.*.local
+.turbo
+*.tsbuildinfo
+.DS_Store
+*.log
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

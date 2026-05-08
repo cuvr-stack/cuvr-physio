@@ -1,0 +1,35 @@
+{
+  "name": "@physio-vr/vr-app",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@physio-vr/shared-types": "*",
+    "next": "^14.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@react-three/fiber": "^8.16.8",
+    "@react-three/drei": "^9.105.4",
+    "@react-three/xr": "^6.2.3",
+    "three": "^0.164.1",
+    "socket.io-client": "^4.7.5",
+    "zustand": "^4.5.2",
+    "@supabase/supabase-js": "^2.43.4",
+    "@supabase/ssr": "^0.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.164.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.3"
+  }
+}
