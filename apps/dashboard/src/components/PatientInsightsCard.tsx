@@ -66,8 +66,7 @@ export function PatientInsightsCard({ patientId }: { patientId: string }) {
     try {
       const res = await fetch(`${API}/api/patients/${patientId}/insights/refresh`, { method: 'POST' });
       if (!res.ok) throw new Error((await res.json()).error ?? `API ${res.status}`);
-      const data = await res.json();
-      // The refresh endpoint returns the new insight directly — but generated_at
+      // The refresh endpoint returns the new insight directly, but generated_at
       // comes from the persist step which is fire-and-forget; refetch to get it.
       await load();
     } catch (e: any) {

@@ -27,12 +27,11 @@ interface ROMarcProps {
 }
 
 function ROMArc({ shoulder, rom }: ROMarcProps) {
-  const lineRef = useRef<THREE.Line>(null);
-
   const geometry = useMemo(() => buildArcGeometry(rom), [rom]);
 
   return (
-    <line ref={lineRef} position={shoulder}>
+    // @ts-expect-error — JSX <line> collides with SVG lineElement; this is the R3F three.js Line
+    <line position={shoulder}>
       <primitive object={geometry} attach="geometry" />
       <lineBasicMaterial color="#00ccff" linewidth={2} transparent opacity={0.7} />
     </line>

@@ -1,13 +1,18 @@
 import type React from 'react';
 import { Sidebar } from '@/components/Sidebar';
 
-function Skeleton({ w = '100%', h = 16, radius = 6 }: { w?: string | number; h?: number; radius?: number }) {
+function Skeleton({
+  w = '100%', h = 16, radius = 6, style,
+}: {
+  w?: string | number; h?: number; radius?: number; style?: React.CSSProperties;
+}) {
   return (
     <div style={{
       width: w, height: h, borderRadius: radius,
       background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',
       backgroundSize: '200% 100%',
       animation: 'shimmer 1.5s infinite',
+      ...style,
     }} />
   );
 }

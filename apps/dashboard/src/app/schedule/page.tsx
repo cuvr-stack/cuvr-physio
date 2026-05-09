@@ -88,7 +88,7 @@ function BookingModal({
   const dateLabel = slot.date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
   async function handleSave() {
-    if (!patientId) return;
+    if (!patientId || !slot) return;
     const [h, m] = slot.time.split(':').map(Number);
     const dt = new Date(slot.date);
     dt.setHours(h, m, 0, 0);
@@ -211,11 +211,13 @@ function AppointmentModal({
   const exLabel = EXERCISES.find(e => e.id === appt.exercise_id)?.label ?? appt.exercise_id;
 
   async function doCancel() {
+    if (!appt) return;
     setLoading('cancel');
     await onCancel(appt.id);
     setLoading(null);
   }
   async function doComplete() {
+    if (!appt) return;
     setLoading('complete');
     await onComplete(appt.id);
     setLoading(null);

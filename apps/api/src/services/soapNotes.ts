@@ -219,7 +219,7 @@ function trim(v: unknown, max = 360): string {
 
 // ─── Rule fallback (no API key required) ────────────────────────────────────
 function ruleFallback(
-  s: SessionRow, p: any, insight: any,
+  _s: SessionRow, p: any, insight: any,
   f: Record<string, any>,
 ): SoapContent {
   const ex = f.exercise ?? 'exercise';

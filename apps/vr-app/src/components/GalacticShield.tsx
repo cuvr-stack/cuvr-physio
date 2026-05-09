@@ -125,10 +125,9 @@ function HandShield({ side }: { side: 'left' | 'right' }) {
     const v = Math.min(1.6, smoothedVel.current);
     const scale = 0.4 + v * 0.6;
 
-    // Map reach → emissive intensity / opacity (the further the brighter)
+    // Map reach → opacity (the further the brighter)
     const reachMapped = Math.min(1, Math.max(0, (reach - 0.25) / 0.7));
     const opacity = 0.15 + reachMapped * 0.55;
-    const intensity = 0.3 + reachMapped * 1.6;
 
     // Position + face the cockpit centre so the ring "guards" the body
     ringRef.current.position.copy(cur);

@@ -6,7 +6,7 @@ export async function gamificationRoutes(fastify: FastifyInstance) {
   // GET /api/gamification/stats/:patientId
   fastify.get<{ Params: { patientId: string } }>(
     '/stats/:patientId',
-    async (req, reply) => {
+    async (req, _reply) => {
       const { data, error } = await supabase
         .from('player_stats')
         .select('*')

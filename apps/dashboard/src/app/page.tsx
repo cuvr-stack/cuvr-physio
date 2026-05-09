@@ -7,7 +7,17 @@ import { PatientSearch } from '@/components/PatientSearch';
 async function getDashboardData() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { user: null, patients: [], activeCount: 0, totalSessions: 0 };
+  if (!user) {
+    return {
+      user: null,
+      patients: [] as any[],
+      activePatients: [] as any[],
+      activeCount: 0,
+      totalSessions: 0,
+      avgROM: 0,
+      todayAppts: [] as any[],
+    };
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -197,7 +207,7 @@ function StatCard({ icon, label, value, sub, subColor, accent }: {
 export default async function DashboardHome() {
   const { user, patients, activePatients, activeCount, totalSessions, avgROM, todayAppts = [] } = await getDashboardData();
 
-  const recentPatients = (patients as any[]).slice(0, 6);
+  // (recentPatients was used in an earlier layout — now superseded by activePatients)
 
   // Highlight the next upcoming appointment (first one whose start time is ≥ now)
   const now = new Date();
@@ -737,7 +747,7 @@ export default async function DashboardHome() {
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', gap: 12 }}>
-                  {activePatients.slice(0, 3).map((p: any, i: number) => {
+                  {activePatients.slice(0, 3).map((p: any) => {
                     const activeSession = p.sessions?.find((s: any) =>
                       s.status === 'active'
                       && s.started_at

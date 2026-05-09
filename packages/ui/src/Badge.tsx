@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface BadgeProps {
   label: string;
   variant?: 'success' | 'warning' | 'error' | 'info';

@@ -87,7 +87,7 @@ export async function analyzePatient(patientId: string): Promise<PatientInsight 
   const insight: PatientInsight = {
     patientId,
     sessions_analyzed: list.length,
-    features,
+    features: features as unknown as Record<string, unknown>,
     ...interpreted,
   };
 

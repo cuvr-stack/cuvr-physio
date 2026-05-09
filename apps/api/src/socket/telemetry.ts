@@ -156,15 +156,18 @@ export function registerTelemetrySocket(io: Server) {
       // Feed the AI coach
       ingestFrame(frame);
 
-      // Accumulate ROM stats for session result on end
+      // Accumulate ROM stats for the session result emitted on end. We only
+      // accumulate AFTER `session:start` has registered the accumulator with
+      // the patient/exercise/targetROM context — frames arriving before that
+      // (rare race condition) are dropped, since they'd be missing the
+      // structural fields the finalizer needs.
       if (frame.sessionId && frame.currentROM != null) {
-        const acc = sessionROMAccumulator.get(frame.sessionId) ?? {
-          sum: 0, count: 0, max: 0, startMs: frame.timestamp,
-        };
-        acc.sum += frame.currentROM;
-        acc.count += 1;
-        acc.max = Math.max(acc.max, frame.currentROM);
-        sessionROMAccumulator.set(frame.sessionId, acc);
+        const acc = sessionROMAccumulator.get(frame.sessionId);
+        if (acc) {
+          acc.sum += frame.currentROM;
+          acc.count += 1;
+          acc.max = Math.max(acc.max, frame.currentROM);
+        }
       }
     });
 

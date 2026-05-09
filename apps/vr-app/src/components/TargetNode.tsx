@@ -56,6 +56,14 @@ const PALETTE: Record<GameMode, Record<GameTarget['status'], string>> = {
     hit:     '#10b981',
     missed:  '#ef4444',
   },
+  // Cervical mode renders via Stargazer.tsx, not TargetNode — but the type
+  // requires every GameMode. Keep a sane fallback palette.
+  cervical: {
+    pending: '#1f2a3a',
+    active:  '#22d3ee',
+    hit:     '#10b981',
+    missed:  '#ef4444',
+  },
 };
 
 // Hand-specific accents for boxing

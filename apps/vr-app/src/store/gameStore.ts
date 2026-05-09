@@ -104,7 +104,7 @@ export const useGameStore = create<GameStore>((set) => ({
         ...s.toasts,
         {
           ts: Date.now(),
-          kind: newTargetROM > s.currentTargetROM ? 'target_up' : 'target_down',
+          kind: (newTargetROM > s.currentTargetROM ? 'target_up' : 'target_down') as CoachToast['kind'],
           text: reason ?? `Target ${newTargetROM > s.currentTargetROM ? 'raised' : 'eased'} to ${newTargetROM}°`,
         },
       ].slice(-3),

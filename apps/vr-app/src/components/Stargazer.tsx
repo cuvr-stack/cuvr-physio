@@ -41,12 +41,13 @@ function holdMsForAge(age: number | null): number {
 }
 
 export function Stargazer({
-  targets, activeTargetIndex, onHit, onMiss,
+  targets, activeTargetIndex, onHit,
 }: {
   targets: GameTarget[];
   activeTargetIndex: number;
   onHit:  (id: number, responseMs: number) => void;
-  onMiss: (id: number) => void;
+  /** Reserved for future "skip-after-30s" behaviour; cervical mode is patient-paced today */
+  onMiss?: (id: number) => void;
 }) {
   const { camera } = useThree();
   const demographics = useSessionStore(s => s.demographics);

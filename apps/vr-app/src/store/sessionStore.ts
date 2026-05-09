@@ -96,7 +96,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   setHandPos: (side, pos) =>
     set(side === 'left' ? { leftHandPos: pos } : { rightHandPos: pos }),
   setROM: (rom) => set({ currentROM: rom }),
-  applyRepReward: (xpGained, repScore, totalXP, level, leveledUp) =>
+  applyRepReward: (_xpGained, repScore, totalXP, level, leveledUp) =>
     set((state) => ({
       score: state.score + repScore,
       xp: totalXP,

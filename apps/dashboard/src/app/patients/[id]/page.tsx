@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { Sidebar } from '@/components/Sidebar';
 import { BackButton } from '@/components/BackButton';
-import { DownloadReportButton, type ReportData } from '@/components/DownloadReportButton';
+import { DownloadReportButton } from '@/components/DownloadReportButton';
 import { PatientLifecycleControls, DischargedBanner } from '@/components/PatientLifecycleControls';
 import { PatientEditButton } from '@/components/PatientEditModal';
 import { PatientInsightsCard } from '@/components/PatientInsightsCard';
@@ -207,7 +207,7 @@ export default async function PatientDetailPage({ params }: PageProps) {
                 {earnedAchievements?.length ?? 0} earned
               </span>
             </h2>
-            <AchievementBadges earned={earnedAchievements ?? []} />
+            <AchievementBadges earned={(earnedAchievements ?? []) as any} />
           </div>
 
           {/* Session history */}
