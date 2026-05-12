@@ -38,6 +38,7 @@ import * as THREE from 'three';
 import type { Group } from 'three';
 import { useSessionStore } from '@/store/sessionStore';
 import type { GameTarget } from '@/store/gameStore';
+import { ZenArchGlassHUD, type ZenHudLive } from '@/components/ZenArchGlassHUD';
 
 // ── Tunable thresholds ───────────────────────────────────────────────────────
 const DRAW_ENTER       = 0.40;   // metres — entering the hold zone
@@ -90,6 +91,7 @@ export function ZenArcher({
   // Keyboard fallback for desktop testing
   const keyDownRef = useRef(false);
   const synthDrawRef = useRef(0);          // 0..0.55, simulated draw amount
+  const hudLiveRef = useRef<ZenHudLive>({ formScore: 1, holdProgress: 0, drawActive: false });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -224,6 +226,19 @@ export function ZenArcher({
       bowGroupRef.current.rotation.x += (Math.random() - 0.5) * tremble;
       bowGroupRef.current.rotation.z += (Math.random() - 0.5) * tremble;
     }
+
+    let liveForm = formScore;
+    if (ds.active && ds.samples.length > 0) {
+      liveForm = ds.samples.reduce((a, b) => a + b, 0) / ds.samples.length;
+    }
+    let liveHold = 0;
+    if (ds.active && dist >= DRAW_ENTER && ds.holdingSince !== null) {
+      liveHold = Math.min(1, (Date.now() - ds.holdingSince) / holdMs);
+    }
+    const h = hudLiveRef.current;
+    h.formScore = liveForm;
+    h.holdProgress = liveHold;
+    h.drawActive = ds.active && dist > DRAW_MIN;
   });
 
   // Decay flashes
@@ -278,15 +293,19 @@ export function ZenArcher({
 
   return (
     <group>
+      <ZenArchGlassHUD liveRef={hudLiveRef} />
+
       {/* ── Scene atmosphere ───────────────────────────────────────── */}
       <TwilightSky />
       <SceneLighting />
-      <fog attach="fog" args={['#3a3a5e', 6, 28]} />
+      <fog attach="fog" args={['#4a5078', 8, 38]} />
 
-      {/* ── Environment ────────────────────────────────────────────── */}
+      {/* ── Zen garden backdrop (twilight river · hills · sakura · mist) ─ */}
       <Mountains />
-      <Lake />
-      <Grass />
+      <MistBands />
+      <RollingHills />
+      <ZenRiver />
+      <GardenGrass />
       <CherryGrove />
       <FallingPetals />
 
@@ -419,9 +438,9 @@ function TwilightSky() {
     side: THREE.BackSide,
     depthWrite: false,
     uniforms: {
-      topColor:    { value: new THREE.Color('#1a1c3a') },     // deep twilight blue
-      midColor:    { value: new THREE.Color('#5a4060') },     // warm purple
-      bottomColor: { value: new THREE.Color('#d68fa8') },     // soft pink horizon
+      topColor:    { value: new THREE.Color('#141830') },
+      midColor:    { value: new THREE.Color('#4c3560') },
+      bottomColor: { value: new THREE.Color('#e89ebd') },
     },
     vertexShader: /* glsl */ `
       varying vec3 vWorld;
@@ -468,14 +487,17 @@ function SceneLighting() {
 // ─── Environment elements ───────────────────────────────────────────────────
 
 function Mountains() {
-  // Multi-layered peaks at varying distances for misty depth. Fog handles the rest.
-  const layers = [
-    // Far back, very desaturated
+  // Layered misty ranges — extra silhouettes for “Zen garden at dusk” depth
+  const layers: {
+    z: number;
+    peaks: [number, number][];
+    colour: string;
+    scale: number;
+  }[] = [
+    { z: -32, peaks: [[-16, 4.2], [-8, 3.5], [0, 4.8], [9, 3.6], [17, 3.2]], colour: '#5c6478', scale: 5.2 },
     { z: -26, peaks: [[-13, 3.5], [-6, 3.0], [0, 4.2], [7, 3.4], [14, 3.0]], colour: '#5a607a', scale: 4.5 },
-    // Mid layer, slightly larger + bluer
-    { z: -20, peaks: [[-9, 2.6], [-2, 3.2], [5, 2.4], [11, 2.0]],            colour: '#48526a', scale: 3.8 },
-    // Near layer, darker
-    { z: -15, peaks: [[-7, 1.8], [3, 2.1], [9, 1.5]],                        colour: '#384258', scale: 3.0 },
+    { z: -20, peaks: [[-9, 2.6], [-2, 3.2], [5, 2.4], [11, 2.0]], colour: '#48526a', scale: 3.8 },
+    { z: -15, peaks: [[-7, 1.8], [3, 2.1], [9, 1.5]], colour: '#384258', scale: 3.0 },
   ];
   return (
     <>
@@ -483,7 +505,7 @@ function Mountains() {
         <group key={li} position={[0, 0, layer.z]}>
           {layer.peaks.map(([x, h], i) => (
             <mesh key={i} position={[x, h * 0.45, 0]}>
-              <coneGeometry args={[layer.scale, h * 1.6, 6]} />
+              <coneGeometry args={[layer.scale, h * 1.7, 7]} />
               <meshStandardMaterial color={layer.colour} roughness={1} flatShading />
             </mesh>
           ))}
@@ -493,41 +515,157 @@ function Mountains() {
   );
 }
 
-function Lake() {
-  // Calm reflective water plane stretching forward to the mountain base.
-  // Slight metalness + low roughness gives a subtle reflective look.
+function MistBands() {
+  // Volumetric-style mist — non-writing quads for layered depth
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -6]}>
-      <planeGeometry args={[40, 22]} />
-      <meshStandardMaterial
-        color="#2a3e4e"
-        metalness={0.45}
-        roughness={0.25}
-        envMapIntensity={0.6}
-      />
+    <group>
+      <mesh position={[0, 0.8, -11]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[48, 4.5]} />
+        <meshBasicMaterial color="#9aa3c4" transparent opacity={0.14} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 1.0, -16]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[52, 5]} />
+        <meshBasicMaterial color="#b8c0e0" transparent opacity={0.1} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0.5, -22]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[55, 6]} />
+        <meshBasicMaterial color="#c4cae8" transparent opacity={0.08} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
+function RollingHills() {
+  // Soft berms framing the water — ties foreground grass to distant peaks
+  const hills: { pos: [number, number, number]; size: [number, number, number]; rot: number; col: string }[] = [
+    { pos: [-7.2, 0, -4.2], size: [4.2, 1.5, 3.6], rot: 0.35, col: '#364a3a' },
+    { pos: [7.5, 0, -4.5], size: [4.5, 1.55, 3.8], rot: -0.28, col: '#2f4234' },
+    { pos: [-8.5, 0, -7.0], size: [3.6, 1.1, 3.0], rot: 0.2, col: '#3a4f3c' },
+    { pos: [8.2, 0, -7.2], size: [3.8, 1.2, 3.2], rot: -0.4, col: '#324636' },
+    { pos: [0, 0, -9.0], size: [14, 0.85, 4.2], rot: 0, col: '#2d3d32' },
+  ];
+  return (
+    <group>
+      {hills.map((h, i) => (
+        <mesh key={i} position={h.pos} rotation={[0, h.rot, 0]} scale={h.size}>
+          <sphereGeometry args={[1, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
+          <meshStandardMaterial color={h.col} roughness={1} flatShading />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function ZenRiver() {
+  // Narrow winding channel — mask follows a meandering centerline in xz (river flows toward -z / target).
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: {
+          uTime: { value: 0 },
+          uDeep: { value: new THREE.Color('#152535') },
+          uMid: { value: new THREE.Color('#2a4a62') },
+          uShine: { value: new THREE.Color('#6a7aa0') },
+          uMud: { value: new THREE.Color('#141c18') },
+        },
+        vertexShader: /* glsl */ `
+          varying vec3 vWorld;
+          void main() {
+            vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          uniform float uTime;
+          uniform vec3 uDeep;
+          uniform vec3 uMid;
+          uniform vec3 uShine;
+          uniform vec3 uMud;
+          varying vec3 vWorld;
+
+          void main() {
+            float z = vWorld.z;
+            float x = vWorld.x;
+
+            /* Meandering centerline: primary bend + slower drift so it reads as winding, not a lake */
+            float cx = 2.35 * sin(z * 0.195 + 1.05)
+                     + 1.28 * sin(z * 0.088 + 2.4)
+                     + 0.42 * sin(z * 0.31 - 0.6);
+
+            float dist = abs(x - cx);
+            float halfWidth = 1.05;
+            float softEdge = 2.35;
+            float channel = 1.0 - smoothstep(halfWidth, halfWidth + softEdge, dist);
+
+            /* Flow is mostly along -z — ripple phase travels downstream */
+            vec2 flowUv = vec2(x - cx, z * 1.05);
+            float along = flowUv.y * 0.55 + uTime * 1.05;
+            float across = flowUv.x * 2.1 + uTime * 0.35;
+            float w1 = sin(along * 0.9 + across * 0.45);
+            float w2 = sin(along * 1.65 - across * 1.1 + uTime * 0.55) * 0.45;
+            float w3 = sin(dist * 3.2 - uTime * 0.9) * channel * 0.06;
+
+            float mixAmt = 0.34 + 0.24 * w1 + 0.14 * w2 + w3;
+            mixAmt *= (0.65 + 0.35 * channel);
+
+            vec3 col = mix(uDeep, uMid, mixAmt);
+            float glint = pow(max(0.0, w1 * 0.5 + 0.5), 3.0) * 0.28 * channel;
+            col = mix(col, uShine, glint);
+
+            /* Damp muddy band at river edge before fading out */
+            float rim = smoothstep(halfWidth * 0.82, halfWidth + softEdge * 0.55, dist)
+                      * (1.0 - smoothstep(halfWidth + softEdge * 0.75, halfWidth + softEdge + 0.15, dist));
+            col = mix(col, uMud, rim * 0.82);
+
+            float alpha = 0.94 * channel;
+            if (alpha < 0.012) discard;
+            gl_FragColor = vec4(col, alpha);
+          }
+        `,
+      }),
+    [],
+  );
+
+  useFrame((s) => {
+    material.uniforms.uTime.value = s.clock.elapsedTime;
+  });
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -5.5]} material={material}>
+      <planeGeometry args={[48, 22]} />
     </mesh>
   );
 }
 
-function Grass() {
-  // Foreground grass plane (closer than the lake)
+function GardenGrass() {
+  // Foreground lawn — continues under transparent non-river areas of ZenRiver
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 1.5]}>
-      <planeGeometry args={[40, 4]} />
-      <meshStandardMaterial color="#2a4030" roughness={0.95} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 1.2]}>
+      <planeGeometry args={[58, 22]} />
+      <meshStandardMaterial color="#1e3024" roughness={0.94} metalness={0.02} />
     </mesh>
   );
 }
 
 function CherryGrove() {
-  // Six cherry blossom trees framing the scene
+  // Sakura along both banks + mid-distance accents (dense Zen-garden framing)
   const trees: { pos: [number, number, number]; scale: number }[] = [
-    { pos: [-3.2,  0, -1],   scale: 1.1 },
-    { pos: [-4.6,  0, -3.5], scale: 0.95 },
-    { pos: [-5.8,  0,  0.8], scale: 1.2 },
-    { pos: [ 3.4,  0, -1.2], scale: 1.05 },
-    { pos: [ 4.8,  0, -3.8], scale: 1.0 },
-    { pos: [ 5.9,  0,  0.6], scale: 1.15 },
+    { pos: [-3.2, 0, -0.8], scale: 1.15 },
+    { pos: [-4.8, 0, -2.8], scale: 1.0 },
+    { pos: [-6.0, 0, 0.6], scale: 1.25 },
+    { pos: [-5.4, 0, -5.0], scale: 0.92 },
+    { pos: [-2.0, 0, -5.8], scale: 1.05 },
+    { pos: [3.4, 0, -1.0], scale: 1.08 },
+    { pos: [5.0, 0, -3.2], scale: 1.02 },
+    { pos: [6.2, 0, 0.5], scale: 1.2 },
+    { pos: [5.6, 0, -5.2], scale: 0.95 },
+    { pos: [2.2, 0, -6.0], scale: 1.0 },
+    { pos: [-1.2, 0, -7.2], scale: 0.88 },
+    { pos: [1.0, 0, -7.5], scale: 0.9 },
+    { pos: [-7.0, 0, -3.6], scale: 0.85 },
+    { pos: [7.2, 0, -4.0], scale: 0.87 },
   ];
   return (
     <>

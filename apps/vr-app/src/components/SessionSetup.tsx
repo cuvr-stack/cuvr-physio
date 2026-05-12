@@ -61,9 +61,10 @@ export function SessionSetup({ onReady }: Props) {
   const [loading, setLoading] = useState(false);
   const [pain, setPain] = useState<number | null>(null);
 
-  const setPatientId    = useSessionStore((s) => s.setPatientId);
-  const setSession      = useSessionStore((s) => s.setSession);
-  const setDemographics = useSessionStore((s) => s.setDemographics);
+  const setPatientId      = useSessionStore((s) => s.setPatientId);
+  const setPatientProfile = useSessionStore((s) => s.setPatientProfile);
+  const setSession        = useSessionStore((s) => s.setSession);
+  const setDemographics   = useSessionStore((s) => s.setDemographics);
   const setMode         = useGameStore((s) => s.setMode);
   const socket          = useSocketContext();
 
@@ -106,6 +107,7 @@ export function SessionSetup({ onReady }: Props) {
       const session = await res.json();
 
       setPatientId(patient.id);
+      setPatientProfile(patient.name, patient.condition, pain ?? null);
       setDemographics({
         dateOfBirth:  patient.date_of_birth ?? null,
         heightCm:     patient.height_cm ?? null,

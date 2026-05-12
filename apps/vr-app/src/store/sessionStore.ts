@@ -37,6 +37,12 @@ const DEFAULT_DEMOGRAPHICS: PatientDemographics = {
 
 interface SessionState {
   patientId: string | null;
+  /** Shown on Zen Archer glass HUD; set when a session starts from the lookup flow. */
+  patientDisplayName: string | null;
+  /** e.g. patient condition — surfaced as the session subtitle in Zen Archer. */
+  patientConditionLabel: string | null;
+  /** Pre-session VAS 0–10; drives the Pain slider on the Zen HUD when present. */
+  painAtStart: number | null;
   demographics: PatientDemographics;
   session: PatientSession | null;
   currentRep: number;
@@ -53,6 +59,7 @@ interface SessionState {
   pendingAchievements: PendingAchievement[];
   scorePopups: ScorePopup[];
   setPatientId: (id: string) => void;
+  setPatientProfile: (name: string | null, conditionLabel: string | null, pain0to10: number | null) => void;
   setDemographics: (d: PatientDemographics) => void;
   setSession: (session: PatientSession) => void;
   incrementRep: (rom: number) => void;
@@ -70,6 +77,9 @@ interface SessionState {
 
 export const useSessionStore = create<SessionState>((set) => ({
   patientId: null,
+  patientDisplayName: null,
+  patientConditionLabel: null,
+  painAtStart: null,
   demographics: DEFAULT_DEMOGRAPHICS,
   session: null,
   currentRep: 0,
@@ -85,6 +95,8 @@ export const useSessionStore = create<SessionState>((set) => ({
   pendingAchievements: [],
   scorePopups: [],
   setPatientId: (patientId) => set({ patientId }),
+  setPatientProfile: (patientDisplayName, patientConditionLabel, painAtStart) =>
+    set({ patientDisplayName, patientConditionLabel, painAtStart }),
   setDemographics: (demographics) => set({ demographics }),
   setSession: (session) => set({ session }),
   incrementRep: (rom) =>
@@ -118,6 +130,10 @@ export const useSessionStore = create<SessionState>((set) => ({
     set((state) => ({ scorePopups: state.scorePopups.filter((p) => p.id !== id) })),
   reset: () =>
     set({
+      patientId: null,
+      patientDisplayName: null,
+      patientConditionLabel: null,
+      painAtStart: null,
       session: null, currentRep: 0, currentROM: 0, score: 0,
       leftHandPos: null, rightHandPos: null, xp: 0, level: 1,
       leveledUp: false, streak: 0, pendingAchievements: [], scorePopups: [],

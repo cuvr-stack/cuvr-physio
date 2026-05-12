@@ -14,6 +14,7 @@ import { ScorePopups } from './ScorePopup';
 import { AchievementToasts } from './AchievementToast';
 import { GamificationListener } from './GamificationListener';
 import { useSessionStore } from '@/store/sessionStore';
+import { useGameStore } from '@/store/gameStore';
 import { useSocketContext } from './SocketProvider';
 
 const xrStore = createXRStore({
@@ -30,6 +31,7 @@ export default function VRScene() {
   const score     = useSessionStore((s) => s.score);
   const currentRep= useSessionStore((s) => s.currentRep);
   const reset     = useSessionStore((s) => s.reset);
+  const gameMode  = useGameStore((s) => s.mode);
   const [ending, setEnding] = useState(false);
 
   async function endSession() {
@@ -118,10 +120,16 @@ export default function VRScene() {
 
       <Canvas camera={{ position: [0, 1.6, 3], fov: 75 }}>
         <XR store={xrStore}>
-          <Sky sunPosition={[100, 20, 100]} />
-          <Environment preset="sunset" />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} intensity={1} />
+          {/* Zen Archer draws its own dusk dome, water, and lighting — skip global IBL/sky
+              so hills, river, and sakura read as one cohesive garden. */}
+          {gameMode !== 'archer' && (
+            <>
+              <Sky sunPosition={[100, 20, 100]} />
+              <Environment preset="sunset" />
+              <ambientLight intensity={0.5} />
+              <directionalLight position={[5, 5, 5]} intensity={1} />
+            </>
+          )}
 
           {/* Hand tracking — drives store + renders wrist spheres + ROM arc */}
           <HandVisualizer />
@@ -129,8 +137,8 @@ export default function VRScene() {
           {/* Reach Cascade game — replaces the static targets */}
           <GameOrchestrator />
 
-          {/* Gamification HUD (replaces ScoreHUD) */}
-          <GamificationHUD />
+          {/* Gamification HUD — Zen Archer uses the bespoke glass HUD instead */}
+          {gameMode !== 'archer' && <GamificationHUD />}
 
           {/* In-VR visual feedback */}
           <RepParticles />
@@ -140,11 +148,13 @@ export default function VRScene() {
           {/* Telemetry streamer */}
           <TelemetryStreamer />
 
-          {/* Ground plane */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-            <planeGeometry args={[20, 20]} />
-            <meshStandardMaterial color="#1a1a2e" />
-          </mesh>
+          {/* Default floor — hidden in Zen Archer (that mode owns grass + river banks). */}
+          {gameMode !== 'archer' && (
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+              <planeGeometry args={[20, 20]} />
+              <meshStandardMaterial color="#1a1a2e" />
+            </mesh>
+          )}
         </XR>
       </Canvas>
     </>
