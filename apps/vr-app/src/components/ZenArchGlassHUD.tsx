@@ -127,7 +127,14 @@ function CompassGauge({ liveRef }: { liveRef: MutableRefObject<ZenHudLive> }) {
         </mesh>
         <mesh position={[0.048, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
           <coneGeometry args={[0.022, 0.065, 4]} />
-          <meshBasicMaterial color={CYAN} emissive={CYAN} emissiveIntensity={0.8} depthWrite={false} />
+          <meshStandardMaterial
+            color={CYAN}
+            emissive={CYAN}
+            emissiveIntensity={0.85}
+            metalness={0.25}
+            roughness={0.35}
+            depthWrite={false}
+          />
         </mesh>
       </group>
     </group>
@@ -157,7 +164,14 @@ function HudSlider({
       </mesh>
       <mesh position={[-trackW / 2 + 0.04 + t * (trackW * 0.84), 0, 0.002]}>
         <circleGeometry args={[0.022, 24]} />
-        <meshBasicMaterial color={CYAN} emissive={CYAN} emissiveIntensity={0.9} depthWrite={false} />
+        <meshStandardMaterial
+          color={CYAN}
+          emissive={CYAN}
+          emissiveIntensity={0.9}
+          metalness={0.2}
+          roughness={0.3}
+          depthWrite={false}
+        />
       </mesh>
     </group>
   );
